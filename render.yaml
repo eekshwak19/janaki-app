@@ -6,6 +6,6 @@ services:
     startCommand: npm start
     envVars:
       - key: GEMINI_API_KEY
-        placeholder: "Enter your Gemini API key"
+        sync: false
       - key: OPENROUTER_API_KEY
-        placeholder: "Enter your OpenRouter API key"
+        sync: false
