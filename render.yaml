@@ -2,6 +2,7 @@ services:
   - type: web
     name: janaki-app
     runtime: node
+    plan: free
     buildCommand: npm run install:all && npm run build:client
     startCommand: npm start
     envVars:
