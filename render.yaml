@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: janaki-app
+    runtime: node
+    buildCommand: npm run install:all && npm run build:client
+    startCommand: npm start
+    envVars:
+      - key: GEMINI_API_KEY
+        placeholder: "Enter your Gemini API key"
+      - key: OPENROUTER_API_KEY
+        placeholder: "Enter your OpenRouter API key"

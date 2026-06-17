@@ -1,0 +1,9 @@
+node_modules/
+.env
+.DS_Store
+dist/
+build/
+*.mp3
+temp_speech_*
+.cache/
+.eslintcache

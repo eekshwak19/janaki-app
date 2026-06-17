@@ -1,0 +1,829 @@
+/* ==========================================================================
+   NEURAL_ROUTE DESIGN SYSTEM: HOLOGRAPHIC BLUE GLASSMORPHISM Theme
+   ========================================================================== */
+
+:root {
+  --bg-primary: #030a16;
+  --bg-secondary: #07162c;
+  --glass-bg: rgba(7, 22, 44, 0.45);
+  --glass-bg-hover: rgba(7, 22, 44, 0.65);
+  --glass-border: rgba(0, 242, 254, 0.2);
+  --glass-border-glow: rgba(0, 242, 254, 0.45);
+  
+  /* Neon Hologram Colors */
+  --neon-cyan: #00f2fe;
+  --neon-blue: #0066ff;
+  --neon-purple: #9d4edd;
+  --neon-red: #ff3366;
+  --neon-green: #39ff14;
+  
+  /* Typography Colors */
+  --text-primary: #e2f1f8;
+  --text-secondary: #82a5c5;
+  --text-muted: #4e6d8a;
+  
+  /* Fonts */
+  --font-header: 'Orbitron', sans-serif;
+  --font-mono: 'Share Tech Mono', monospace;
+  --font-body: 'Inter', sans-serif;
+  
+  --shadow-glow: 0 0 15px rgba(0, 242, 254, 0.25);
+  --shadow-glow-strong: 0 0 25px rgba(0, 242, 254, 0.5);
+  --shadow-glow-blue: 0 0 15px rgba(0, 102, 255, 0.3);
+}
+
+/* Base resets & styles */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  overflow-x: hidden;
+  height: 100vh;
+  width: 100vw;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(3, 10, 22, 0.5);
+  border-left: 1px solid rgba(0, 242, 254, 0.1);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--glass-border);
+  border-radius: 3px;
+  border: 1px solid var(--neon-cyan);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--neon-cyan);
+  box-shadow: 0 0 8px var(--neon-cyan);
+}
+
+/* Background Grids & Hologram Scanlines */
+.hud-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -2;
+  background: 
+    radial-gradient(circle at 50% 50%, #0d264a 0%, #030a16 100%);
+  overflow: hidden;
+}
+
+/* Grid overlay */
+.hud-grid {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    linear-gradient(rgba(0, 242, 254, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 242, 254, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  background-position: center;
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* Subtle Perspective Grid Animation */
+.hud-grid::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(180deg, transparent 70%, rgba(3, 10, 22, 0.8) 100%);
+  pointer-events: none;
+}
+
+/* Scanlines Effect */
+.hud-scanlines {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    rgba(18, 16, 16, 0) 50%, 
+    rgba(0, 0, 0, 0.25) 50%
+  );
+  background-size: 100% 4px;
+  z-index: 1000;
+  pointer-events: none;
+  opacity: 0.45;
+}
+
+/* Glassmorphism Panel styles */
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  box-shadow: var(--shadow-glow-blue);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-panel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--neon-cyan), transparent);
+  opacity: 0.5;
+}
+
+.glass-panel:hover {
+  background: var(--glass-bg-hover);
+  border-color: var(--glass-border-glow);
+  box-shadow: var(--shadow-glow), var(--shadow-glow-blue);
+}
+
+/* Floating HUD telemetry elements */
+.hud-telemetry {
+  font-family: var(--font-mono);
+  color: var(--neon-cyan);
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 2px;
+}
+
+/* Hologram Flicker Animation */
+@keyframes hologramFlicker {
+  0% { opacity: 0.95; }
+  2% { opacity: 0.6; }
+  3% { opacity: 0.9; }
+  4% { opacity: 0.55; }
+  5% { opacity: 0.95; }
+  50% { opacity: 0.98; }
+  55% { opacity: 0.8; }
+  56% { opacity: 0.98; }
+  90% { opacity: 0.95; }
+  91% { opacity: 0.7; }
+  92% { opacity: 0.95; }
+  100% { opacity: 1; }
+}
+
+.hologram-effect {
+  /* Animation disabled to prevent screen blinking/flicker */
+}
+
+/* Text glow */
+.glow-text-cyan {
+  text-shadow: 0 0 8px rgba(0, 242, 254, 0.6);
+  color: var(--neon-cyan);
+}
+
+.glow-text-blue {
+  text-shadow: 0 0 8px rgba(0, 102, 255, 0.6);
+  color: var(--neon-blue);
+}
+
+/* Neon buttons */
+.neon-button {
+  background: rgba(0, 242, 254, 0.05);
+  border: 1px solid var(--neon-cyan);
+  color: var(--neon-cyan);
+  font-family: var(--font-mono);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  padding: 0.6rem 1.2rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+  box-shadow: 0 0 10px rgba(0, 242, 254, 0.1);
+}
+
+.neon-button:hover {
+  background: var(--neon-cyan);
+  color: var(--bg-primary);
+  box-shadow: 0 0 15px var(--neon-cyan);
+  text-shadow: none;
+}
+
+.neon-button:active {
+  transform: translateY(1px);
+}
+
+/* HUD corners styling */
+.hud-corners {
+  position: relative;
+}
+.hud-corners::before, .hud-corners::after {
+  content: '';
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-color: var(--neon-cyan);
+  border-style: solid;
+  pointer-events: none;
+  z-index: 10;
+}
+.hud-corners::before {
+  top: -1px;
+  left: -1px;
+  border-width: 2px 0 0 2px;
+}
+.hud-corners::after {
+  bottom: -1px;
+  right: -1px;
+  border-width: 0 2px 2px 0;
+}
+
+/* Scanning line animation */
+@keyframes scanEffect {
+  0% { top: -100%; }
+  100% { top: 200%; }
+}
+.scan-line {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 80px;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(0, 242, 254, 0.08) 50%,
+    transparent 100%
+  );
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* LaTeX Custom formatting */
+.latex-block {
+  overflow-x: auto;
+  padding: 1rem;
+  background: rgba(3, 10, 22, 0.4);
+  border-left: 2px solid var(--neon-cyan);
+  border-radius: 0 4px 4px 0;
+  margin: 1rem 0;
+  font-size: 1.1rem;
+}
+.latex-inline {
+  background: rgba(0, 242, 254, 0.08);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  color: var(--neon-cyan);
+}
+
+/* Loader HUD */
+.hud-loader {
+  display: inline-block;
+  position: relative;
+  width: 40px;
+  height: 40px;
+}
+.hud-loader div {
+  box-sizing: border-box;
+  display: block;
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  margin: 4px;
+  border: 3px solid var(--neon-cyan);
+  border-radius: 50%;
+  animation: hud-loader-ring 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+  border-color: var(--neon-cyan) transparent transparent transparent;
+}
+.hud-loader div:nth-child(1) { animation-delay: -0.45s; }
+.hud-loader div:nth-child(2) { animation-delay: -0.3s; }
+.hud-loader div:nth-child(3) { animation-delay: -0.15s; }
+@keyframes hud-loader-ring {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* ATM Card Modal Styling */
+.atm-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(3, 10, 22, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  gap: 1.5rem;
+  animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.atm-modal-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.2rem;
+  position: relative;
+}
+
+/* Aspect ratio of standard ID-1/ATM card (85.6mm x 53.98mm ~ 1.586) */
+.atm-card {
+  width: 580px;
+  height: 360px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(8, 28, 56, 0.8) 0%, rgba(3, 10, 22, 0.9) 100%);
+  border: 1.5px solid var(--neon-cyan);
+  box-shadow: 0 0 35px rgba(0, 242, 254, 0.35), inset 0 0 15px rgba(0, 242, 254, 0.15);
+  padding: 1.5rem;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+  box-sizing: border-box;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+}
+
+.atm-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 242, 254, 0.03) 0px,
+    rgba(0, 242, 254, 0.03) 1px,
+    transparent 1px,
+    transparent 2px
+  );
+  pointer-events: none;
+}
+
+/* Hologram Chip */
+.atm-chip {
+  width: 42px;
+  height: 32px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #00f2fe 0%, #0066ff 100%);
+  position: absolute;
+  top: 1.2rem;
+  left: 1.2rem;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 0 10px rgba(0, 242, 254, 0.4);
+  overflow: hidden;
+}
+
+.atm-chip::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    linear-gradient(90deg, transparent 50%, rgba(255,255,255,0.15) 50%),
+    linear-gradient(0deg, transparent 50%, rgba(255,255,255,0.15) 50%);
+  background-size: 8px 8px;
+}
+
+/* Micro-gridding on the chip to look realistic */
+.atm-chip-grid {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+.atm-chip-grid::after {
+  content: '';
+  position: absolute;
+  top: 20%; left: 0; right: 0; height: 1px; background: rgba(0,0,0,0.2);
+}
+.atm-chip-grid::before {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0; left: 50%; width: 1px; background: rgba(0,0,0,0.2);
+}
+
+.atm-card-header {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--neon-cyan);
+  z-index: 10;
+}
+
+.atm-card-close {
+  background: transparent;
+  border: none;
+  color: var(--neon-red);
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 0.2rem 0.5rem;
+  margin-left: 1.5rem;
+  transition: all 0.2s ease;
+  outline: none;
+}
+.atm-card-close:hover {
+  color: #fff;
+  text-shadow: 0 0 8px var(--neon-red);
+}
+
+.atm-card-body {
+  flex-grow: 1;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: #e2f1f8;
+  overflow-y: auto;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0 1rem;
+}
+
+.atm-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  border-top: 1px solid rgba(0, 242, 254, 0.15);
+  padding-top: 0.5rem;
+  z-index: 10;
+}
+
+/* Navigation controls */
+.atm-controls {
+  display: flex;
+  gap: 1rem;
+  width: 100%;
+  justify-content: center;
+  z-index: 10;
+}
+
+.atm-nav-button {
+  background: rgba(3, 10, 22, 0.6);
+  border: 1px solid var(--neon-cyan);
+  color: var(--neon-cyan);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  padding: 0.5rem 1.2rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 90px;
+  text-align: center;
+}
+
+.atm-nav-button:hover:not(:disabled) {
+  background: var(--neon-cyan);
+  color: var(--bg-primary);
+  box-shadow: 0 0 12px var(--neon-cyan);
+}
+
+.atm-nav-button:disabled {
+  border-color: var(--text-muted);
+  color: var(--text-muted);
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ==========================================================================
+   SIDEBAR & SESSION HISTORY SYSTEM
+   ========================================================================== */
+
+.sidebar-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: rgba(5, 15, 30, 0.4);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: var(--shadow-glow-blue);
+  transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease, padding 0.3s ease, margin 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.sidebar-content {
+  display: flex;
+  flex-direction: column;
+  width: 248px; /* Slightly adjusted to fit inside 250px boundary */
+  height: 100%;
+  padding: 1.2rem 1rem;
+  box-sizing: border-box;
+  gap: 1.2rem;
+  min-width: 248px; /* Prevent shrinking when width is transition active */
+}
+
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.session-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding-right: 0.2rem;
+}
+
+.session-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.7rem 0.8rem;
+  border-radius: 6px;
+  background: rgba(7, 22, 44, 0.25);
+  border: 1px solid rgba(0, 242, 254, 0.08);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.session-item:hover {
+  background: rgba(7, 22, 44, 0.55);
+  border-color: rgba(0, 242, 254, 0.3);
+  box-shadow: 0 0 10px rgba(0, 242, 254, 0.12);
+}
+
+.session-item.active {
+  background: rgba(0, 242, 254, 0.08);
+  border-color: var(--neon-cyan);
+  box-shadow: 0 0 12px rgba(0, 242, 254, 0.2), inset 0 0 4px rgba(0, 242, 254, 0.1);
+}
+
+.session-title-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.session-title {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.session-meta {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.session-delete-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 0.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  margin-left: 0.5rem;
+  outline: none;
+  border-radius: 4px;
+}
+
+.session-delete-btn:hover {
+  color: var(--neon-red);
+  background: rgba(255, 51, 102, 0.1);
+  box-shadow: 0 0 5px rgba(255, 51, 102, 0.2);
+}
+
+/* ==========================================================================
+   PRINT MEDIA STYLES (PDF EXPORTS)
+   ========================================================================== */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  
+  .textbook-print-area,
+  .textbook-print-area * {
+    visibility: visible;
+  }
+  
+  .textbook-print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    background: #ffffff !important;
+    color: #111111 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  
+  .no-print {
+    display: none !important;
+  }
+}
+
+/* ==========================================================================
+   COGNITIVE MODE (CALM ENVIRONMENT) THEME
+   ========================================================================== */
+
+body.cognitive-theme {
+  background-color: #E8F3EA !important;
+  color: #2B2B2B !important;
+  font-family: 'Roboto', 'Open Sans', 'Inter', sans-serif !important;
+}
+
+body.cognitive-theme .hud-background {
+  background: #E8F3EA !important;
+}
+
+body.cognitive-theme .hud-scanlines,
+body.cognitive-theme .hud-grid,
+body.cognitive-theme #particle-canvas,
+body.cognitive-theme .hud-background::after {
+  display: none !important;
+}
+
+/* Override variables when cognitive theme is active */
+.cognitive-theme {
+  --bg-primary: #E8F3EA;
+  --bg-secondary: #F0EFEC;
+  --glass-bg: rgba(240, 239, 236, 0.85);
+  --glass-bg-hover: rgba(240, 239, 236, 0.95);
+  --glass-border: rgba(186, 204, 189, 0.6);
+  --glass-border-glow: rgba(186, 204, 189, 0.9);
+  
+  /* Earth Tone Accents instead of Neon Glows */
+  --neon-cyan: #4A5D4E;      /* Slate Sage */
+  --neon-blue: #7E8F82;      /* Muted Earth Green */
+  --neon-purple: #B0A295;    /* Muted Warm Sand */
+  --neon-red: #C38D7D;       /* Terracotta Accent */
+  --neon-green: #8FAF87;     /* Soft Earth Green */
+  
+  /* High contrast but low strain typography */
+  --text-primary: #2B2B2B;
+  --text-secondary: #4A4A4A;
+  --text-muted: #6B6B6B;
+  
+  --font-header: 'Roboto', 'Open Sans', sans-serif;
+  --font-body: 'Roboto', 'Open Sans', sans-serif;
+  
+  --shadow-glow: 0 4px 12px rgba(74, 93, 78, 0.08);
+  --shadow-glow-strong: 0 6px 20px rgba(74, 93, 78, 0.12);
+  --shadow-glow-blue: 0 4px 12px rgba(110, 110, 110, 0.08);
+}
+
+/* Typography & Generous Spacing overrides */
+.cognitive-theme .markdown-render {
+  font-family: 'Roboto', 'Open Sans', sans-serif !important;
+  line-height: 1.8 !important;
+  letter-spacing: 0.05em !important;
+  color: #2B2B2B !important;
+}
+
+.cognitive-theme .markdown-render p {
+  font-family: 'Roboto', 'Open Sans', sans-serif !important;
+  margin-bottom: 2rem !important; /* 'Chunking' margins */
+  line-height: 1.8 !important;
+  letter-spacing: 0.05em !important;
+}
+
+/* Remove glow texts in cognitive mode */
+.cognitive-theme .glow-text-cyan,
+.cognitive-theme .glow-text-red,
+.cognitive-theme .glow-text-green {
+  text-shadow: none !important;
+  color: var(--neon-cyan) !important;
+}
+
+.cognitive-theme .glow-text-cyan {
+  color: #4A5D4E !important;
+}
+
+/* Calmer styling for input fields */
+.cognitive-theme input[type="text"] {
+  background: rgba(255, 255, 255, 0.8) !important;
+  color: #2B2B2B !important;
+  border: 1px solid rgba(186, 204, 189, 0.8) !important;
+}
+
+.cognitive-theme input[type="text"]::placeholder {
+  color: #8A8A8A !important;
+}
+
+.cognitive-theme input[type="text"]:focus {
+  border-color: #4A5D4E !important;
+  box-shadow: 0 0 5px rgba(74, 93, 78, 0.25) !important;
+}
+
+/* Calmer button styles */
+.cognitive-theme .neon-button {
+  background: #F0EFEC !important;
+  color: #2B2B2B !important;
+  border: 1px solid rgba(186, 204, 189, 0.8) !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+.cognitive-theme .neon-button:hover:not(:disabled) {
+  background: #E8F3EA !important;
+  border-color: #4A5D4E !important;
+  box-shadow: 0 2px 8px rgba(74, 93, 78, 0.1) !important;
+}
+
+/* Calmer header and border accents */
+.cognitive-theme header {
+  border-bottom: 2px solid rgba(186, 204, 189, 0.5) !important;
+  box-shadow: none !important;
+}
+
+.cognitive-theme .glass-panel::before {
+  background: linear-gradient(90deg, transparent, rgba(74, 93, 78, 0.3), transparent) !important;
+  opacity: 0.3 !important;
+}
+
+/* Sidebar and session list overrides */
+.cognitive-theme .session-item.active {
+  background: rgba(232, 243, 234, 0.8) !important;
+  border-left: 3px solid #4A5D4E !important;
+}
+
+.cognitive-theme .session-item:hover {
+  background: rgba(240, 239, 236, 0.5) !important;
+}
+
+.cognitive-theme .session-title {
+  color: #2B2B2B !important;
+}
+
+.cognitive-theme .session-meta {
+  color: #6B6B6B !important;
+}
+
+.cognitive-theme .session-list {
+  border-color: rgba(186, 204, 189, 0.4) !important;
+}
+
+.cognitive-theme form {
+  border-top: 1px solid rgba(186, 204, 189, 0.5) !important;
+}
+
+/* Custom pulse animation for the Emergency Stop Audio button */
+@keyframes calmPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(195, 141, 125, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(195, 141, 125, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(195, 141, 125, 0);
+  }
+}
+
+
