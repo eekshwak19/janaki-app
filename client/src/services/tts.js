@@ -141,27 +141,27 @@ export async function speakText(text, rate = 1.0) {
       const utterance = new SpeechSynthesisUtterance(voiceText);
       utterance.rate = rate;
 
-      // Select ONLY the en-US-AnaNeural voice (or general Ana voice)
+      // Select ONLY the en-US-AriaNeural voice (or general Aria voice)
       let voices = window.speechSynthesis.getVoices();
-      let anaVoice = voices.find(v => 
-        v.name.toLowerCase().includes('ana') || 
-        v.id?.toLowerCase().includes('ana')
+      let ariaVoice = voices.find(v => 
+        v.name.toLowerCase().includes('aria') || 
+        v.id?.toLowerCase().includes('aria')
       );
 
-      if (!anaVoice && voices.length === 0) {
+      if (!ariaVoice && voices.length === 0) {
         // Try waiting 100ms for async voices to load
         await new Promise(resolve => setTimeout(resolve, 100));
         voices = window.speechSynthesis.getVoices();
-        anaVoice = voices.find(v => 
-          v.name.toLowerCase().includes('ana') || 
-          v.id?.toLowerCase().includes('ana')
+        ariaVoice = voices.find(v => 
+          v.name.toLowerCase().includes('aria') || 
+          v.id?.toLowerCase().includes('aria')
         );
       }
 
-      if (anaVoice) {
-        utterance.voice = anaVoice;
+      if (ariaVoice) {
+        utterance.voice = ariaVoice;
       } else {
-        console.warn('en-US-AnaNeural voice not found in browser speech synthesis. Only en-US-AnaNeural is permitted.');
+        console.warn('en-US-AriaNeural voice not found in browser speech synthesis. Only en-US-AriaNeural is permitted.');
         return; // Do not use any other voice
       }
 

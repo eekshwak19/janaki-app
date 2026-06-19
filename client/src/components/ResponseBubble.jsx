@@ -293,8 +293,17 @@ export default function ResponseBubble({ message, index, fullHistory, onShowAtmA
                       onClick={(e) => {
                         e.preventDefault();
                         stopSpeech();
+                        const nextCount = count + 1;
                         if (onUpdateMessageRevealedCount) {
-                          onUpdateMessageRevealedCount(index, count + 1);
+                          onUpdateMessageRevealedCount(index, nextCount);
+                        }
+                        const nextChunk = messageChunks[count];
+                        if (nextChunk) {
+                          let speakTextStr = nextChunk;
+                          if (nextCount < messageChunks.length) {
+                            speakTextStr += " ... Click continue reading.";
+                          }
+                          speakText(speakTextStr, 0.9);
                         }
                       }}
                       className="neon-button hologram-effect"
@@ -340,6 +349,9 @@ export default function ResponseBubble({ message, index, fullHistory, onShowAtmA
                 const messageChunks = chunkText(message.content);
                 const count = message.revealedChunksCount || 1;
                 textToSpeak = messageChunks.slice(0, count).join('\n\n');
+                if (count < messageChunks.length) {
+                  textToSpeak += " ... Click continue reading.";
+                }
               }
               speakText(textToSpeak, cognitiveMode ? 0.9 : (message.isResearch ? 0.9 : 1.0));
             }}

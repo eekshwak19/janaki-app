@@ -381,6 +381,15 @@ export default function App() {
     setAtmCards(cards);
     setAtmCardIndex(0);
     setActiveAtmMessage(message);
+    
+    if (cognitiveMode && cards.length > 0) {
+      stopSpeech();
+      let speakTextStr = cards[0];
+      if (cards.length > 1) {
+        speakTextStr += " ... Click next.";
+      }
+      speakText(speakTextStr, 0.9);
+    }
   };
 
   const handleNewChat = () => {
@@ -964,7 +973,10 @@ export default function App() {
                 <span>PAGE {String(atmCardIndex + 1).padStart(2, '0')} / {String(atmCards.length).padStart(2, '0')}</span>
                 <button 
                   className="atm-card-close"
-                  onClick={() => setActiveAtmMessage(null)}
+                  onClick={() => {
+                    stopSpeech();
+                    setActiveAtmMessage(null);
+                  }}
                 >
                   [ X ]
                 </button>
@@ -1018,14 +1030,40 @@ export default function App() {
               <button 
                 className="atm-nav-button"
                 disabled={atmCardIndex === 0}
-                onClick={() => setAtmCardIndex(prev => Math.max(0, prev - 1))}
+                onClick={() => {
+                  const prevIndex = Math.max(0, atmCardIndex - 1);
+                  setAtmCardIndex(prevIndex);
+                  if (cognitiveMode) {
+                    stopSpeech();
+                    let speakTextStr = atmCards[prevIndex];
+                    if (prevIndex > 0) {
+                      speakTextStr += " ... Click previous or next.";
+                    } else {
+                      speakTextStr += " ... Click next.";
+                    }
+                    speakText(speakTextStr, 0.9);
+                  }
+                }}
               >
                 PREV
               </button>
               <button 
                 className="atm-nav-button"
                 disabled={atmCardIndex === atmCards.length - 1}
-                onClick={() => setAtmCardIndex(prev => Math.min(atmCards.length - 1, prev + 1))}
+                onClick={() => {
+                  const nextIndex = Math.min(atmCards.length - 1, atmCardIndex + 1);
+                  setAtmCardIndex(nextIndex);
+                  if (cognitiveMode) {
+                    stopSpeech();
+                    let speakTextStr = atmCards[nextIndex];
+                    if (nextIndex < atmCards.length - 1) {
+                      speakTextStr += " ... Click previous or next.";
+                    } else {
+                      speakTextStr += " ... Click previous.";
+                    }
+                    speakText(speakTextStr, 0.9);
+                  }
+                }}
               >
                 NEXT
               </button>
