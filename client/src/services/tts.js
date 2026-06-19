@@ -141,27 +141,27 @@ export async function speakText(text, rate = 1.0) {
       const utterance = new SpeechSynthesisUtterance(voiceText);
       utterance.rate = rate;
 
-      // Select ONLY the en-US-AriaNeural voice (or general Aria voice)
+      // Select ONLY the en-US-JennyNeural voice (or general Jenny voice)
       let voices = window.speechSynthesis.getVoices();
-      let ariaVoice = voices.find(v => 
-        v.name.toLowerCase().includes('aria') || 
-        v.id?.toLowerCase().includes('aria')
+      let jennyVoice = voices.find(v => 
+        v.name.toLowerCase().includes('jenny') || 
+        v.id?.toLowerCase().includes('jenny')
       );
 
-      if (!ariaVoice && voices.length === 0) {
+      if (!jennyVoice && voices.length === 0) {
         // Try waiting 100ms for async voices to load
         await new Promise(resolve => setTimeout(resolve, 100));
         voices = window.speechSynthesis.getVoices();
-        ariaVoice = voices.find(v => 
-          v.name.toLowerCase().includes('aria') || 
-          v.id?.toLowerCase().includes('aria')
+        jennyVoice = voices.find(v => 
+          v.name.toLowerCase().includes('jenny') || 
+          v.id?.toLowerCase().includes('jenny')
         );
       }
 
-      if (ariaVoice) {
-        utterance.voice = ariaVoice;
+      if (jennyVoice) {
+        utterance.voice = jennyVoice;
       } else {
-        console.warn('en-US-AriaNeural voice not found in browser speech synthesis. Only en-US-AriaNeural is permitted.');
+        console.warn('en-US-JennyNeural voice not found in browser speech synthesis. Only en-US-JennyNeural is permitted.');
         return; // Do not use any other voice
       }
 
