@@ -1040,17 +1040,19 @@ export default function App() {
                 onClick={() => {
                   const prevIndex = Math.max(0, atmCardIndex - 1);
                   setAtmCardIndex(prevIndex);
-                  if (cognitiveMode && autoPlaySpeech) {
-                    stopSpeech();
-                    let speakTextStr = atmCards[prevIndex];
-                    if (prevIndex > 0) {
-                      speakTextStr += " ... Click previous or next.";
+                  if (cognitiveMode) {
+                    if (autoPlaySpeech) {
+                      stopSpeech();
+                      let speakTextStr = atmCards[prevIndex];
+                      if (prevIndex > 0) {
+                        speakTextStr += " ... Click previous or next.";
+                      } else {
+                        speakTextStr += " ... Click next.";
+                      }
+                      speakText(speakTextStr, 0.9);
                     } else {
-                      speakTextStr += " ... Click next.";
+                      stopSpeech();
                     }
-                    speakText(speakTextStr, 0.9);
-                  } else {
-                    stopSpeech();
                   }
                 }}
               >
@@ -1062,17 +1064,19 @@ export default function App() {
                 onClick={() => {
                   const nextIndex = Math.min(atmCards.length - 1, atmCardIndex + 1);
                   setAtmCardIndex(nextIndex);
-                  if (cognitiveMode && autoPlaySpeech) {
-                    stopSpeech();
-                    let speakTextStr = atmCards[nextIndex];
-                    if (nextIndex < atmCards.length - 1) {
-                      speakTextStr += " ... Click previous or next.";
+                  if (cognitiveMode) {
+                    if (autoPlaySpeech) {
+                      stopSpeech();
+                      let speakTextStr = atmCards[nextIndex];
+                      if (nextIndex < atmCards.length - 1) {
+                        speakTextStr += " ... Click previous or next.";
+                      } else {
+                        speakTextStr += " ... Click previous.";
+                      }
+                      speakText(speakTextStr, 0.9);
                     } else {
-                      speakTextStr += " ... Click previous.";
+                      stopSpeech();
                     }
-                    speakText(speakTextStr, 0.9);
-                  } else {
-                    stopSpeech();
                   }
                 }}
               >
