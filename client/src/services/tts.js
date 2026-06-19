@@ -141,27 +141,27 @@ export async function speakText(text, rate = 1.0) {
       const utterance = new SpeechSynthesisUtterance(voiceText);
       utterance.rate = rate;
 
-      // Select ONLY the en-US-JennyNeural voice (or general Jenny voice)
+      // Select ONLY the en-US-AnaNeural voice (or general Ana voice)
       let voices = window.speechSynthesis.getVoices();
-      let jennyVoice = voices.find(v => 
-        v.name.toLowerCase().includes('jenny') || 
-        v.id?.toLowerCase().includes('jenny')
+      let anaVoice = voices.find(v => 
+        v.name.toLowerCase().includes('ana') || 
+        v.id?.toLowerCase().includes('ana')
       );
 
-      if (!jennyVoice && voices.length === 0) {
+      if (!anaVoice && voices.length === 0) {
         // Try waiting 100ms for async voices to load
         await new Promise(resolve => setTimeout(resolve, 100));
         voices = window.speechSynthesis.getVoices();
-        jennyVoice = voices.find(v => 
-          v.name.toLowerCase().includes('jenny') || 
-          v.id?.toLowerCase().includes('jenny')
+        anaVoice = voices.find(v => 
+          v.name.toLowerCase().includes('ana') || 
+          v.id?.toLowerCase().includes('ana')
         );
       }
 
-      if (jennyVoice) {
-        utterance.voice = jennyVoice;
+      if (anaVoice) {
+        utterance.voice = anaVoice;
       } else {
-        console.warn('en-US-JennyNeural voice not found in browser speech synthesis. Only en-US-JennyNeural is permitted.');
+        console.warn('en-US-AnaNeural voice not found in browser speech synthesis. Only en-US-AnaNeural is permitted.');
         return; // Do not use any other voice
       }
 

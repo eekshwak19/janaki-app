@@ -46,7 +46,7 @@ const DIGITAL_TWIN_PROMPT = `You are my Digital Twin—a research peer who knows
 You must operate under the following mandates at all times:
 
 1. Voice & Audio Protocol:
-- Voice Engine: You are exclusively using edge-tts with the voice en-US-JennyNeural.
+- Voice Engine: You are exclusively using edge-tts with the voice en-US-AnaNeural.
 - Voice Quality: This voice must sound soothing, calm, and professional.
 - Formatting: Since we are using a neural engine, you must write text that sounds like a human speaking, not a document.
 - Prohibited: Never use bullet points, numbered lists, headers (like # or ##), or markdown tables.
@@ -68,7 +68,7 @@ const COGNITIVE_MODE_PROMPT = `You are my Digital Twin—a highly supportive, gr
 You must operate under the following mandates at all times:
 
 1. Voice & Audio Protocol:
-- Voice Engine: You are exclusively using edge-tts with the voice en-US-JennyNeural.
+- Voice Engine: You are exclusively using edge-tts with the voice en-US-AnaNeural.
 - Voice Quality: This voice must sound soothing, calm, and professional.
 - Formatting: Since we are using a neural engine, you must write text that sounds like a human speaking, not a document.
 - Prohibited: Never use bullet points, numbered lists, headers (like # or ##), or markdown tables.
@@ -134,7 +134,7 @@ app.post('/api/chat', async (req, res) => {
   }
 });
 
-// Endpoint to generate TTS speech using local edge-tts python service (en-US-JennyNeural)
+// Endpoint to generate TTS speech using local edge-tts python service (en-US-AnaNeural)
 app.post('/api/tts', async (req, res) => {
   const { text } = req.body;
   
