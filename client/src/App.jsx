@@ -145,6 +145,7 @@ export default function App() {
   });
 
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [autoPlaySpeech, setAutoPlaySpeech] = useState(false);
 
   useEffect(() => {
     localStorage.setItem('cognitive_mode', cognitiveMode);
@@ -383,12 +384,15 @@ export default function App() {
     setActiveAtmMessage(message);
     
     if (cognitiveMode && cards.length > 0) {
+      setAutoPlaySpeech(true);
       stopSpeech();
       let speakTextStr = cards[0];
       if (cards.length > 1) {
         speakTextStr += " ... Click next.";
       }
       speakText(speakTextStr, 0.9);
+    } else {
+      setAutoPlaySpeech(false);
     }
   };
 
@@ -888,6 +892,8 @@ export default function App() {
                 onOpenResearchModal={setActiveResearchMessage}
                 cognitiveMode={cognitiveMode}
                 onUpdateMessageRevealedCount={handleUpdateMessageRevealedCount}
+                autoPlaySpeech={autoPlaySpeech}
+                onSetAutoPlaySpeech={setAutoPlaySpeech}
               />
             ))}
 
@@ -975,6 +981,7 @@ export default function App() {
                   className="atm-card-close"
                   onClick={() => {
                     stopSpeech();
+                    setAutoPlaySpeech(false);
                     setActiveAtmMessage(null);
                   }}
                 >
@@ -1033,7 +1040,7 @@ export default function App() {
                 onClick={() => {
                   const prevIndex = Math.max(0, atmCardIndex - 1);
                   setAtmCardIndex(prevIndex);
-                  if (cognitiveMode) {
+                  if (cognitiveMode && autoPlaySpeech) {
                     stopSpeech();
                     let speakTextStr = atmCards[prevIndex];
                     if (prevIndex > 0) {
@@ -1042,6 +1049,8 @@ export default function App() {
                       speakTextStr += " ... Click next.";
                     }
                     speakText(speakTextStr, 0.9);
+                  } else {
+                    stopSpeech();
                   }
                 }}
               >
@@ -1053,7 +1062,7 @@ export default function App() {
                 onClick={() => {
                   const nextIndex = Math.min(atmCards.length - 1, atmCardIndex + 1);
                   setAtmCardIndex(nextIndex);
-                  if (cognitiveMode) {
+                  if (cognitiveMode && autoPlaySpeech) {
                     stopSpeech();
                     let speakTextStr = atmCards[nextIndex];
                     if (nextIndex < atmCards.length - 1) {
@@ -1062,6 +1071,8 @@ export default function App() {
                       speakTextStr += " ... Click previous.";
                     }
                     speakText(speakTextStr, 0.9);
+                  } else {
+                    stopSpeech();
                   }
                 }}
               >
@@ -1391,7 +1402,10 @@ export default function App() {
     {/* Floating Emergency Stop Audio Button */}
     {isSpeaking && (
       <button
-        onClick={stopSpeech}
+        onClick={() => {
+          stopSpeech();
+          setAutoPlaySpeech(false);
+        }}
         className="no-print"
         style={{
           position: 'fixed',

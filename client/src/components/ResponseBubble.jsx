@@ -39,7 +39,7 @@ function chunkText(text) {
   return chunks;
 }
 
-export default function ResponseBubble({ message, index, fullHistory, onShowAtmAnswer, onOpenResearchModal, cognitiveMode = false, onUpdateMessageRevealedCount }) {
+export default function ResponseBubble({ message, index, fullHistory, onShowAtmAnswer, onOpenResearchModal, cognitiveMode = false, onUpdateMessageRevealedCount, autoPlaySpeech = false, onSetAutoPlaySpeech }) {
   const isUser = message.role === 'user';
   const isResearchMessage = !isUser && message.isResearch;
   const [thinkingExpanded, setThinkingExpanded] = useState(true);
@@ -298,7 +298,7 @@ export default function ResponseBubble({ message, index, fullHistory, onShowAtmA
                           onUpdateMessageRevealedCount(index, nextCount);
                         }
                         const nextChunk = messageChunks[count];
-                        if (nextChunk) {
+                        if (nextChunk && autoPlaySpeech) {
                           let speakTextStr = nextChunk;
                           if (nextCount < messageChunks.length) {
                             speakTextStr += " ... Click continue reading.";
@@ -344,6 +344,7 @@ export default function ResponseBubble({ message, index, fullHistory, onShowAtmA
           <span style={{ color: 'var(--text-secondary)' }}>TTS:</span>
           <button
             onClick={() => {
+              if (onSetAutoPlaySpeech) onSetAutoPlaySpeech(true);
               let textToSpeak = message.content;
               if (cognitiveMode) {
                 const messageChunks = chunkText(message.content);
@@ -372,7 +373,10 @@ export default function ResponseBubble({ message, index, fullHistory, onShowAtmA
             ▶ SPEAK
           </button>
           <button
-            onClick={stopSpeech}
+            onClick={() => {
+              stopSpeech();
+              if (onSetAutoPlaySpeech) onSetAutoPlaySpeech(false);
+            }}
             style={{
               background: 'transparent',
               border: 'none',

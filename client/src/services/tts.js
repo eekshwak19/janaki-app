@@ -196,6 +196,10 @@ export function stopSpeech() {
 
     if (window.speechSynthesis) {
       window.speechSynthesis.cancel();
+      if (window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
+        window.speechSynthesis.cancel();
+      }
     }
     currentUtterance = null;
 
