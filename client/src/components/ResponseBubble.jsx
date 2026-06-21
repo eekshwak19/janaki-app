@@ -39,7 +39,7 @@ function chunkText(text) {
   return chunks;
 }
 
-export default function ResponseBubble({ message, index, fullHistory, onShowAtmAnswer, onOpenResearchModal, cognitiveMode = false, onUpdateMessageRevealedCount, autoPlaySpeech = false, onSetAutoPlaySpeech }) {
+export default function ResponseBubble({ message, index, fullHistory, onShowAtmAnswer, onOpenResearchModal, cognitiveMode = false, onUpdateMessageRevealedCount, autoPlaySpeech = false, onSetAutoPlaySpeech, onEekshwakClick }) {
   const isUser = message.role === 'user';
   const isResearchMessage = !isUser && message.isResearch;
   const [thinkingExpanded, setThinkingExpanded] = useState(true);
@@ -393,6 +393,33 @@ export default function ResponseBubble({ message, index, fullHistory, onShowAtmA
           >
             ⏹ STOP
           </button>
+          {!cognitiveMode && (
+            <button
+              onClick={() => {
+                if (onEekshwakClick) {
+                  onEekshwakClick(message, index);
+                }
+              }}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: 'var(--neon-cyan)',
+                cursor: 'pointer',
+                outline: 'none',
+                padding: '0.1rem 0.3rem',
+                marginLeft: '0.6rem',
+                transition: 'all 0.2s ease',
+                fontFamily: 'inherit',
+                fontSize: 'inherit',
+                borderLeft: '1px solid rgba(0, 242, 254, 0.25)',
+                paddingLeft: '0.6rem'
+              }}
+              onMouseEnter={(e) => e.target.style.textShadow = '0 0 5px var(--neon-cyan)'}
+              onMouseLeave={(e) => e.target.style.textShadow = 'none'}
+            >
+              🎓 FOR EEKSHWAK
+            </button>
+          )}
         </div>
       )}
     </div>
