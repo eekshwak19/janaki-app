@@ -1270,7 +1270,15 @@ export default function App() {
                   🔇 STOP
                 </button>
                 <button
-                  onClick={() => window.print()}
+                  onClick={() => {
+                    const originalTitle = document.title;
+                    const sessionTitle = activeSession?.title || 'Janaki Research Report';
+                    document.title = sessionTitle.replace(/[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF]/g, "").trim();
+                    window.print();
+                    setTimeout(() => {
+                      document.title = originalTitle;
+                    }, 1000);
+                  }}
                   className="neon-button"
                   style={{
                     padding: '0.4rem 1rem',

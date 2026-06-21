@@ -645,28 +645,50 @@ body {
     visibility: hidden;
   }
   
+  /* Reset layout constraints on all parents of the print area so it doesn't get clipped */
+  html, body, #root, .atm-overlay, .glass-panel {
+    visibility: hidden !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    position: static !important;
+    display: block !important;
+    width: 100% !important;
+    max-width: none !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  
   .textbook-print-area,
   .textbook-print-area * {
-    visibility: visible;
+    visibility: visible !important;
   }
   
   .textbook-print-area {
-    position: absolute;
-    left: 0;
-    top: 0;
+    display: block !important;
+    position: relative !important;
     width: 100% !important;
     height: auto !important;
+    max-height: none !important;
     overflow: visible !important;
     background: #ffffff !important;
     color: #111111 !important;
-    padding: 0 !important;
+    padding: 2.5cm !important;
     margin: 0 !important;
+    box-sizing: border-box !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
   
   .no-print {
     display: none !important;
   }
 }
+
 
 /* ==========================================================================
    COGNITIVE MODE (CALM ENVIRONMENT) THEME
