@@ -21,14 +21,14 @@ export async function fetchRoutes() {
  * @param {Array} messages - Chat history in OpenAI format [{role: 'user'|'assistant', content: string}]
  * @returns {Promise<object>} Routed reply and telemetry
  */
-export async function sendChatMessage(messages, researchMode = false, cognitiveMode = false, eekshwakMode = false) {
+export async function sendChatMessage(messages, researchMode = false, cognitiveMode = false) {
   try {
     const response = await fetch('/api/chat', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ messages, researchMode, cognitiveMode, eekshwakMode })
+      body: JSON.stringify({ messages, researchMode, cognitiveMode })
     });
 
     const data = await response.json();

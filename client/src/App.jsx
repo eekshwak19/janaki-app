@@ -396,32 +396,6 @@ export default function App() {
     }
   };
 
-  const handleEekshwakMode = async (message, messageIndex) => {
-    // Find user message history up to this message
-    const historyUpToUser = messages.slice(0, messageIndex);
-    if (historyUpToUser.length === 0) return;
-
-    // Open ATM card overlay in loading state
-    setAtmCardIndex(0);
-    setAtmCards(['⏳ **INITIALIZING MATHEMATICAL DIAGNOSTIC PIPELINE...**\n\nCoupling symbol translators, proof decompressors, and quantifier logic agents for Eekshwak... Please stand by.']);
-    setActiveAtmMessage({ role: 'assistant', content: 'Generating...' });
-    
-    try {
-      setError(null);
-      // Call API with eekshwakMode = true
-      const result = await sendChatMessage(historyUpToUser, isResearchModeActive, cognitiveMode, true);
-      
-      // Split the returned text into cards and display
-      const cards = splitIntoAtmCards(result.text);
-      setAtmCards(cards);
-      setAtmCardIndex(0);
-      setActiveAtmMessage({ role: 'assistant', content: result.text });
-    } catch (err) {
-      console.error('Eekshwak mode generation failed:', err);
-      setAtmCards([`❌ **PIPELINE COUPLING ERROR**\n\nFailed to fetch diagnostic mathematical cognition report: ${err.message}`]);
-    }
-  };
-
   const handleNewChat = () => {
     const newId = String(Date.now());
     const newSession = {
@@ -920,7 +894,6 @@ export default function App() {
                 onUpdateMessageRevealedCount={handleUpdateMessageRevealedCount}
                 autoPlaySpeech={autoPlaySpeech}
                 onSetAutoPlaySpeech={setAutoPlaySpeech}
-                onEekshwakClick={handleEekshwakMode}
               />
             ))}
 
@@ -1085,27 +1058,6 @@ export default function App() {
               >
                 PREV
               </button>
-
-              <button
-                className="atm-nav-button"
-                style={{ borderColor: 'var(--neon-cyan)', color: 'var(--neon-cyan)' }}
-                onClick={() => {
-                  speakText(atmCards[atmCardIndex], 1.0);
-                }}
-              >
-                🔊 SPEAK
-              </button>
-
-              <button
-                className="atm-nav-button"
-                style={{ borderColor: 'var(--neon-red)', color: 'var(--neon-red)' }}
-                onClick={() => {
-                  stopSpeech();
-                }}
-              >
-                🔇 STOP
-              </button>
-
               <button 
                 className="atm-nav-button"
                 disabled={atmCardIndex === atmCards.length - 1}
