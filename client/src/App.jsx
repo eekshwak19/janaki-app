@@ -396,6 +396,155 @@ export default function App() {
     }
   };
 
+  const handlePrintReport = () => {
+    const sessionTitle = activeSession?.title || 'Janaki Research Report';
+    const cleanTitle = sessionTitle.replace(/[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF]/g, "").trim();
+    
+    const printArea = document.querySelector('.textbook-print-area');
+    if (!printArea) return;
+    const printContent = printArea.innerHTML;
+
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = '0';
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentWindow.document || iframe.contentDocument;
+    doc.open();
+    doc.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>${cleanTitle}</title>
+          <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css" crossOrigin="anonymous">
+          <style>
+            @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Roboto:wght@300;400;500;700&display=swap');
+            
+            @page {
+              size: A4;
+              margin: 20mm;
+            }
+            
+            body {
+              font-family: 'Georgia', 'Times New Roman', serif;
+              font-size: 11pt;
+              line-height: 1.75;
+              color: #2b2b2b;
+              background: #ffffff;
+              margin: 0;
+              padding: 0;
+            }
+
+            .textbook-content {
+              width: 100%;
+            }
+
+            p {
+              margin: 0 0 1.5rem 0;
+              text-align: justify;
+            }
+
+            h1 {
+              font-family: 'Outfit', 'Roboto', sans-serif;
+              font-size: 22pt;
+              color: #111;
+              border-bottom: 2px solid #333;
+              padding-bottom: 0.5rem;
+              margin-top: 0;
+              margin-bottom: 1.5rem;
+            }
+
+            h2 {
+              font-family: 'Outfit', 'Roboto', sans-serif;
+              font-size: 16pt;
+              color: #222;
+              margin-top: 2rem;
+              margin-bottom: 1rem;
+            }
+
+            h3 {
+              font-family: 'Outfit', 'Roboto', sans-serif;
+              font-size: 12.5pt;
+              color: #333;
+              margin-top: 1.5rem;
+              margin-bottom: 0.8rem;
+            }
+
+            pre {
+              background: #f8f8f8;
+              border: 1px solid #e0e0e0;
+              padding: 1rem;
+              border-radius: 4px;
+              overflow-x: auto;
+              margin: 1.5rem 0;
+              white-space: pre-wrap;
+              word-break: break-all;
+              page-break-inside: avoid;
+            }
+
+            code {
+              font-family: "Courier New", Courier, monospace;
+              font-size: 9pt;
+              color: #333;
+            }
+
+            blockquote {
+              border-left: 4px solid #888;
+              margin: 1.5rem 0;
+              padding-left: 1.2rem;
+              color: #555;
+              font-style: italic;
+              page-break-inside: avoid;
+            }
+
+            .latex-block-textbook {
+              margin: 1.5rem 0;
+              padding: 1rem;
+              background: #fcfcfc;
+              border: 1px solid #eaeaea;
+              border-radius: 4px;
+              font-size: 11pt;
+              display: flex;
+              justify-content: center;
+              page-break-inside: avoid;
+            }
+
+            h1, h2, h3 {
+              page-break-after: avoid;
+              page-break-inside: avoid;
+            }
+
+            pre, blockquote, tr, img, .latex-block-textbook {
+              page-break-inside: avoid;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="textbook-content">
+            ${printContent}
+          </div>
+          <script>
+            window.onload = function() {
+              setTimeout(function() {
+                window.focus();
+                window.print();
+                setTimeout(function() {
+                  window.parent.document.body.removeChild(window.frameElement);
+                }, 1000);
+              }, 500);
+            };
+          </script>
+        </body>
+      </html>
+    `);
+    doc.close();
+  };
+
+
   const handleNewChat = () => {
     const newId = String(Date.now());
     const newSession = {
@@ -1270,15 +1419,7 @@ export default function App() {
                   🔇 STOP
                 </button>
                 <button
-                  onClick={() => {
-                    const originalTitle = document.title;
-                    const sessionTitle = activeSession?.title || 'Janaki Research Report';
-                    document.title = sessionTitle.replace(/[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF]/g, "").trim();
-                    window.print();
-                    setTimeout(() => {
-                      document.title = originalTitle;
-                    }, 1000);
-                  }}
+                  onClick={handlePrintReport}
                   className="neon-button"
                   style={{
                     padding: '0.4rem 1rem',
