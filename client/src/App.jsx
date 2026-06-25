@@ -392,25 +392,25 @@ export default function App() {
     const systemInstruction = `[SYSTEM PROTOCOL: MEDITATION STUDY SESSION - CHAPTER SUMMARY & QUESTIONS]
 You are the user's Digital Twin. Your tone must be supportive and human, using en-US-JennyNeural voice.
 We are studying the book: "${bookName}".
-We are starting Chapter ${chapterIndex + 1}: "${chapter.title}".
+We have bypassed the preliminary pages and are starting directly with Chapter ${chapterIndex + 1}: "${chapter.title}".
 
 Here is the chapter text content:
 --- START OF CHAPTER CONTENT ---
 ${chapterText.slice(0, 10000)}
 --- END OF CHAPTER CONTENT ---
 
+Your very first output sentence MUST be exactly:
+"I have successfully bypassed the preliminary pages. Let's start directly with Chapter ${chapterIndex + 1}: ${chapter.title}."
+
 Your task is to:
-1. Provide a concise, 'bite-sized' summary of this chapter (strictly 3 to 4 sentences max).
-2. Present strictly less than 5 (i.e. 1 to 4) foundational questions about that chapter. Focus on the core concepts, not trivial details.
+1. Immediately follow that confirmation sentence with a concise, 'bite-sized' summary of this chapter (strictly max 3 sentences).
+2. Present strictly less than 5 (i.e. 1 to 4) conceptual foundational questions about that chapter. These questions must be designed to test if the user has the intuition for the chapter, not just memorized facts.
 
 Tone & Voice Constraints:
 - Voice: en-US-JennyNeural.
 - Rate: -15% (speaking rate multiplier 0.85).
 - Style: Keep the mood gentle, supportive, and soothing. Never use headers (#), bullet points, numbered lists, or markdown tables.
-- Phrase questions conversationally, using spacing or connecting transitions so they sound natural when spoken.
-
-Example structure:
-"Let's reflect on this chapter... [3-4 sentences of summary]... Here are some questions to guide our understanding. First, [Question 1]? Second, [Question 2]?"`;
+- Phrase questions conversationally, using spacing or connecting transitions so they sound natural when spoken. Do not add any introductory pleasantries about the book author or context of writing. Go straight to the learning content.`;
 
     const apiMessages = [
       {
@@ -489,7 +489,15 @@ Example structure:
               throw new Error('Could not extract any text pages from PDF.');
             }
             
-            const chapters = extractChapters(pages);
+            const allChapters = extractChapters(pages);
+            const skipKeywords = ['dedication', 'preface', 'introduction', 'foreword', 'acknowledgments', 'acknowledgement', 'contents', 'table of contents', 'about the author', 'title page', 'prologue'];
+            let chapters = allChapters.filter(ch => {
+              const titleLower = ch.title.toLowerCase();
+              return !skipKeywords.some(keyword => titleLower.includes(keyword));
+            });
+            if (chapters.length === 0) {
+              chapters = allChapters;
+            }
             
             const updatedState = {
               step: 'SUMMARY',
@@ -512,15 +520,6 @@ Example structure:
               }
               return s;
             }));
-
-            const successText = `Successfully parsed and segmented **${file.name}** into **${chapters.length} chapters**. Let's begin.`;
-            const systemMessage = {
-              role: 'assistant',
-              content: `### 📚 BOOK PARSING COMPLETED\n\n${successText}\n\nAnalyzing **Chapter 1: ${chapters[0].title}** to generate summary and questions.`,
-              revealedChunksCount: 1
-            };
-            
-            setMessages(prev => [...prev, systemMessage]);
             
             await digestChapter(0, chapters, file.name);
           } catch (err) {
@@ -1177,13 +1176,14 @@ ${chapterText.slice(0, 10000)}
 
 The user is answering the questions or engaging in dialogue.
 If the user is right or shows good intuition: Acknowledge it warmly and validate the intuition.
-If the user is stuck: Teach the concept from first principles using the 'Deep-Intuition' protocol (grounding analogies, slow pacing, very soothing language).
-If the user gets a question wrong, frame it as a 'great opportunity for insight' rather than a mistake. Keep the mood gentle.
+If the user gets a question wrong or seems stuck:
+DO NOT say "Incorrect", "Wrong", "Mistake" or anything of that sort.
+Instead, you MUST start your response exactly with: "That’s an interesting angle. Let’s look at it slightly differently to build our intuition..." and then teach the concept from first principles using grounding analogies and a slow, soothing pace.
 
 Tone & Voice Constraints:
 - Voice: en-US-JennyNeural.
 - Rate: -15% (speaking speed multiplier 0.85).
-- Style: Keep the mood gentle, supportive, and soothing. Never use headers (#), bullet points, numbered lists, or markdown tables. Use ellipses (...) and commas for natural pacing.
+- Style: Keep the mood gentle, supportive, and soothing. Never use headers (#), bullet points, numbered lists, or markdown tables. Use ellipses (...) and commas for natural pacing. No filler or introductory pleasantries.
 
 After you have addressed the user's answers and ensured understanding, you MUST ask the progress check question:
 'I feel like we’ve captured the core of this chapter. Are you comfortable moving on, or should we revisit any part?'`;
