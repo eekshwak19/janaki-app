@@ -225,9 +225,6 @@ export default function App() {
     return localStorage.getItem('cognitive_mode') === 'true';
   });
 
-  const [meditationMode, setMeditationMode] = useState(false);
-  const [meditationState, setMeditationState] = useState(null);
-
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [autoPlaySpeech, setAutoPlaySpeech] = useState(false);
 
@@ -250,6 +247,68 @@ export default function App() {
   const handleToggleCognitiveMode = () => {
     setCognitiveMode(prev => !prev);
   };
+
+
+
+  const handleUpdateMessageRevealedCount = (index, newCount) => {
+    setMessages(prev => prev.map((msg, idx) => {
+      if (idx === index) {
+        return { ...msg, revealedChunksCount: newCount };
+      }
+      return msg;
+    }));
+    setSessions(prev => prev.map(s => {
+      if (s.session_id === currentSessionId) {
+        const updatedMessages = s.messages.map((msg, idx) => {
+          if (idx === index) {
+            return { ...msg, revealedChunksCount: newCount };
+          }
+          return msg;
+        });
+        return { ...s, messages: updatedMessages };
+      }
+      return s;
+    }));
+  };
+
+  const [sessions, setSessions] = useState(() => {
+    const stored = localStorage.getItem('neural_route_sessions');
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      } catch (e) {
+        console.error('Failed to parse sessions from localStorage:', e);
+      }
+    }
+    const defaultId = String(Date.now());
+    return [{
+      session_id: defaultId,
+      title: 'New Conversation',
+      timestamp: Date.now(),
+      isResearchModeActive: false,
+      messages: []
+    }];
+  });
+
+  const [currentSessionId, setCurrentSessionId] = useState(() => {
+    return sessions[0]?.session_id || '';
+  });
+
+  const [messages, setMessages] = useState(() => {
+    const active = sessions.find(s => s.session_id === (sessions[0]?.session_id || ''));
+    return active ? active.messages : [];
+  });
+
+  const [isResearchModeActive, setIsResearchModeActive] = useState(() => {
+    const active = sessions.find(s => s.session_id === (sessions[0]?.session_id || ''));
+    return active ? !!active.isResearchModeActive : false;
+  });
+
+  const [meditationMode, setMeditationMode] = useState(false);
+  const [meditationState, setMeditationState] = useState(null);
 
   useEffect(() => {
     if (meditationState && currentSessionId) {
@@ -485,63 +544,6 @@ Example structure:
       setLoading(false);
     }
   };
-
-  const handleUpdateMessageRevealedCount = (index, newCount) => {
-    setMessages(prev => prev.map((msg, idx) => {
-      if (idx === index) {
-        return { ...msg, revealedChunksCount: newCount };
-      }
-      return msg;
-    }));
-    setSessions(prev => prev.map(s => {
-      if (s.session_id === currentSessionId) {
-        const updatedMessages = s.messages.map((msg, idx) => {
-          if (idx === index) {
-            return { ...msg, revealedChunksCount: newCount };
-          }
-          return msg;
-        });
-        return { ...s, messages: updatedMessages };
-      }
-      return s;
-    }));
-  };
-
-  const [sessions, setSessions] = useState(() => {
-    const stored = localStorage.getItem('neural_route_sessions');
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
-        }
-      } catch (e) {
-        console.error('Failed to parse sessions from localStorage:', e);
-      }
-    }
-    const defaultId = String(Date.now());
-    return [{
-      session_id: defaultId,
-      title: 'New Conversation',
-      timestamp: Date.now(),
-      isResearchModeActive: false,
-      messages: []
-    }];
-  });
-
-  const [currentSessionId, setCurrentSessionId] = useState(() => {
-    return sessions[0]?.session_id || '';
-  });
-
-  const [messages, setMessages] = useState(() => {
-    const active = sessions.find(s => s.session_id === (sessions[0]?.session_id || ''));
-    return active ? active.messages : [];
-  });
-
-  const [isResearchModeActive, setIsResearchModeActive] = useState(() => {
-    const active = sessions.find(s => s.session_id === (sessions[0]?.session_id || ''));
-    return active ? !!active.isResearchModeActive : false;
-  });
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [inputValue, setInputValue] = useState('');
