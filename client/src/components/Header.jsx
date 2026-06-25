@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-export default function Header({ providers = { gemini: false, openrouter: false }, onResearchClick, isResearchActive = false, onToggleSidebar, cognitiveMode = false, onCognitiveToggle }) {
+export default function Header({ providers = { gemini: false, openrouter: false }, onResearchClick, isResearchActive = false, onToggleSidebar, cognitiveMode = false, onCognitiveToggle, meditationMode = false, onMeditationToggle }) {
   const [time, setTime] = useState('');
 
   useEffect(() => {
@@ -61,6 +61,25 @@ export default function Header({ providers = { gemini: false, openrouter: false 
       </div>
 
       <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
+        {/* Meditation Mode Switcher Button */}
+        <button
+          onClick={onMeditationToggle}
+          className="neon-button hologram-effect"
+          style={{
+            padding: '0.4rem 1.2rem',
+            fontSize: '0.75rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            background: meditationMode ? 'rgba(143, 175, 135, 0.25)' : 'rgba(3, 10, 22, 0.6)',
+            borderColor: meditationMode ? 'var(--neon-cyan)' : 'var(--glass-border)',
+            boxShadow: meditationMode ? '0 0 12px rgba(143, 175, 135, 0.3)' : 'none',
+            color: meditationMode ? 'var(--neon-cyan)' : 'var(--text-secondary)'
+          }}
+        >
+          <span>{meditationMode ? '🧘 MEDITATION ACTIVE' : '🧘 MEDITATION'}</span>
+        </button>
+
         {/* Cognitive Mode Switcher Button */}
         <button
           onClick={onCognitiveToggle}

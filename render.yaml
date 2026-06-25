@@ -3,7 +3,7 @@ services:
     name: janaki-app
     runtime: node
     plan: free
-    buildCommand: npm run install:all && npm run build:client
+    buildCommand: npm run install:all && npm run build:client && (pip install edge-tts || pip3 install edge-tts || python3 -m pip install edge-tts || true)
     startCommand: npm start
     envVars:
       - key: GEMINI_API_KEY

@@ -139,10 +139,94 @@ function retrieveRelevantContext(prompt, books) {
   return contextParts.join('\n\n');
 }
 
+function extractChapters(pages) {
+  const chapters = [];
+  let currentChapterContent = [];
+  let currentChapterTitle = 'Introduction';
+  let chapterCount = 0;
+
+  // Regexes to match chapter starts on a page
+  const chapterRegexes = [
+    /^\s*(?:chapter|section|part|book|unit)\s+(\d+|[ivxldcm]+)\b/i,
+    /^\s*ch(?:apter|\.)\s*(\d+)/i,
+    /^\s*(?:chapter|section|part|book|unit)\s+(?:one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty)/i,
+  ];
+
+  for (let i = 0; i < pages.length; i++) {
+    const pageText = pages[i] || '';
+    const firstLines = pageText.split('\n').slice(0, 3).join('\n').trim();
+    
+    let isNewChapter = false;
+    let matchedTitle = '';
+
+    for (const regex of chapterRegexes) {
+      const match = firstLines.match(regex);
+      if (match) {
+        isNewChapter = true;
+        const matchedLine = firstLines.substring(0, 80).split('\n')[0].trim();
+        matchedTitle = matchedLine;
+        break;
+      }
+    }
+
+    if (isNewChapter) {
+      if (currentChapterContent.length > 0) {
+        chapters.push({
+          title: currentChapterTitle,
+          pages: [...currentChapterContent]
+        });
+      }
+      chapterCount++;
+      currentChapterTitle = matchedTitle || `Chapter ${chapterCount}`;
+      currentChapterContent = [pageText];
+    } else {
+      if (currentChapterContent.length >= 10) {
+        if (currentChapterContent.length > 0) {
+          chapters.push({
+            title: currentChapterTitle,
+            pages: [...currentChapterContent]
+          });
+        }
+        chapterCount++;
+        currentChapterTitle = `Chapter ${chapterCount} (Part ${Math.floor(currentChapterContent.length / 10) + 1})`;
+        currentChapterContent = [pageText];
+      } else {
+        currentChapterContent.push(pageText);
+      }
+    }
+  }
+
+  if (currentChapterContent.length > 0) {
+    chapters.push({
+      title: currentChapterTitle,
+      pages: [...currentChapterContent]
+    });
+  }
+
+  if (chapters.length <= 1) {
+    const allPages = chapters[0]?.pages || pages;
+    const splitChapters = [];
+    const size = 8;
+    for (let i = 0; i < allPages.length; i += size) {
+      const chunk = allPages.slice(i, i + size);
+      splitChapters.push({
+        title: `Chapter ${Math.floor(i / size) + 1}`,
+        pages: chunk
+      });
+    }
+    return splitChapters;
+  }
+
+  return chapters;
+}
+
 export default function App() {
   const [cognitiveMode, setCognitiveMode] = useState(() => {
     return localStorage.getItem('cognitive_mode') === 'true';
   });
+
+  const [meditationMode, setMeditationMode] = useState(false);
+  const [meditationState, setMeditationState] = useState(null);
 
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [autoPlaySpeech, setAutoPlaySpeech] = useState(false);
@@ -165,6 +249,241 @@ export default function App() {
 
   const handleToggleCognitiveMode = () => {
     setCognitiveMode(prev => !prev);
+  };
+
+  useEffect(() => {
+    if (meditationState && currentSessionId) {
+      setSessions(prev => prev.map(s => {
+        if (s.session_id === currentSessionId) {
+          return { ...s, meditationState };
+        }
+        return s;
+      }));
+    }
+  }, [meditationState, currentSessionId]);
+
+  const handleMeditationToggle = () => {
+    if (!meditationMode) {
+      setMeditationMode(true);
+      setCognitiveMode(true);
+      
+      const newId = String(Date.now());
+      const initialMedState = {
+        step: 'UPLOAD',
+        chapters: [],
+        currentChapterIndex: 0,
+        pdfName: '',
+        questionsText: ''
+      };
+      
+      const initText = "I’m here to help you engage with your material calmly. Please upload the PDF of the book you’d like us to study together.";
+      const initMessage = {
+        role: 'assistant',
+        content: initText,
+        revealedChunksCount: 1
+      };
+      
+      const newSession = {
+        session_id: newId,
+        title: '🧘 Meditation Session',
+        timestamp: Date.now(),
+        isResearchModeActive: false,
+        isMeditation: true,
+        meditationState: initialMedState,
+        messages: [initMessage]
+      };
+      
+      setSessions(prev => [newSession, ...prev]);
+      setCurrentSessionId(newId);
+      setMessages([initMessage]);
+      setMeditationState(initialMedState);
+      
+      stopSpeech();
+      speakText(initText, 0.85);
+    } else {
+      setMeditationMode(false);
+      setMeditationState(null);
+      stopSpeech();
+      
+      setSessions(prev => prev.map(s => {
+        if (s.session_id === currentSessionId) {
+          return { ...s, isMeditation: false };
+        }
+        return s;
+      }));
+    }
+  };
+
+  const digestChapter = async (chapterIndex, chaptersList, pdfName) => {
+    const chapters = chaptersList || meditationState?.chapters;
+    const bookName = pdfName || meditationState?.pdfName;
+    
+    if (!chapters || chapters.length <= chapterIndex) {
+      setError("No more chapters left or chapter data missing.");
+      return;
+    }
+    
+    setLoading(true);
+    setError(null);
+    stopSpeech();
+    
+    const chapter = chapters[chapterIndex];
+    const chapterText = chapter.pages.join('\n\n');
+    
+    const systemInstruction = `[SYSTEM PROTOCOL: MEDITATION STUDY SESSION - CHAPTER SUMMARY & QUESTIONS]
+You are the user's Digital Twin. Your tone must be supportive and human, using en-US-JennyNeural voice.
+We are studying the book: "${bookName}".
+We are starting Chapter ${chapterIndex + 1}: "${chapter.title}".
+
+Here is the chapter text content:
+--- START OF CHAPTER CONTENT ---
+${chapterText.slice(0, 10000)}
+--- END OF CHAPTER CONTENT ---
+
+Your task is to:
+1. Provide a concise, 'bite-sized' summary of this chapter (strictly 3 to 4 sentences max).
+2. Present strictly less than 5 (i.e. 1 to 4) foundational questions about that chapter. Focus on the core concepts, not trivial details.
+
+Tone & Voice Constraints:
+- Voice: en-US-JennyNeural.
+- Rate: -15% (speaking rate multiplier 0.85).
+- Style: Keep the mood gentle, supportive, and soothing. Never use headers (#), bullet points, numbered lists, or markdown tables.
+- Phrase questions conversationally, using spacing or connecting transitions so they sound natural when spoken.
+
+Example structure:
+"Let's reflect on this chapter... [3-4 sentences of summary]... Here are some questions to guide our understanding. First, [Question 1]? Second, [Question 2]?"`;
+
+    const apiMessages = [
+      {
+        role: 'user',
+        content: `Let's start studying Chapter ${chapterIndex + 1}: ${chapter.title}. Please summarize it and ask foundational questions.`
+      }
+    ];
+    
+    try {
+      const result = await sendChatMessage(apiMessages, false, true, systemInstruction);
+      
+      const assistantMessage = {
+        role: 'assistant',
+        content: result.text,
+        reasoning: result.reasoning,
+        telemetry: result.telemetry,
+        revealedChunksCount: 1
+      };
+      
+      setMessages(prev => {
+        const updated = [...prev, assistantMessage];
+        setSessions(sPrev => sPrev.map(s => {
+          if (s.session_id === currentSessionId) {
+            return { ...s, messages: updated };
+          }
+          return s;
+        }));
+        return updated;
+      });
+      
+      setMeditationState(prev => ({
+        ...prev,
+        step: 'DIALOGUE',
+        currentChapterIndex: chapterIndex,
+        questionsText: result.text
+      }));
+      
+      speakText(result.text, 0.85);
+    } catch (err) {
+      setError(`MEDITATION_DIGEST_FAILED: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleMeditationPdfUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      if (file.type === 'application/pdf') {
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+          try {
+            const arrayBuffer = event.target.result;
+            const pdfjsLib = window['pdfjs-dist/build/pdf'];
+            if (!pdfjsLib) {
+              throw new Error('PDF.js library is not loaded. Please verify your index.html configurations.');
+            }
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+            const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+            const pdf = await loadingTask.promise;
+            const pages = [];
+            
+            for (let i = 1; i <= pdf.numPages; i++) {
+              const page = await pdf.getPage(i);
+              const textContent = await page.getTextContent();
+              const pageText = textContent.items.map(item => item.str).join(' ');
+              pages.push(pageText.trim() || `[Page ${i} is empty or contains non-extractable text]`);
+            }
+            
+            if (pages.length === 0) {
+              throw new Error('Could not extract any text pages from PDF.');
+            }
+            
+            const chapters = extractChapters(pages);
+            
+            const updatedState = {
+              step: 'SUMMARY',
+              chapters: chapters,
+              currentChapterIndex: 0,
+              pdfName: file.name,
+              questionsText: ''
+            };
+            
+            setMeditationState(updatedState);
+            
+            setSessions(prev => prev.map(s => {
+              if (s.session_id === currentSessionId) {
+                return {
+                  ...s,
+                  title: `🧘 Study: ${file.name.replace(/\.pdf$/i, '')}`,
+                  books: [...(s.books || []).filter(b => b.name !== file.name), { name: file.name, pages }],
+                  meditationState: updatedState
+                };
+              }
+              return s;
+            }));
+
+            const successText = `Successfully parsed and segmented **${file.name}** into **${chapters.length} chapters**. Let's begin.`;
+            const systemMessage = {
+              role: 'assistant',
+              content: `### 📚 BOOK PARSING COMPLETED\n\n${successText}\n\nAnalyzing **Chapter 1: ${chapters[0].title}** to generate summary and questions.`,
+              revealedChunksCount: 1
+            };
+            
+            setMessages(prev => [...prev, systemMessage]);
+            
+            await digestChapter(0, chapters, file.name);
+          } catch (err) {
+            console.error('PDF extraction failed:', err);
+            setError(`PDF_IMPORT_FAILED: ${err.message}`);
+          } finally {
+            setLoading(false);
+          }
+        };
+        reader.onerror = () => {
+          setError('File reading error occurred.');
+          setLoading(false);
+        };
+        reader.readAsArrayBuffer(file);
+      } else {
+        setError('Please upload a PDF file.');
+        setLoading(false);
+      }
+    } catch (err) {
+      setError(`IMPORT_FAILED: ${err.message}`);
+      setLoading(false);
+    }
   };
 
   const handleUpdateMessageRevealedCount = (index, newCount) => {
@@ -566,6 +885,20 @@ export default function App() {
       setCurrentSessionId(id);
       setMessages(target.messages);
       setIsResearchModeActive(!!target.isResearchModeActive);
+      
+      if (target.isMeditation) {
+        setMeditationMode(true);
+        setCognitiveMode(true);
+        setMeditationState(target.meditationState || {
+          step: 'UPLOAD',
+          chapters: [],
+          currentChapterIndex: 0,
+          pdfName: ''
+        });
+      } else {
+        setMeditationMode(false);
+        setMeditationState(null);
+      }
     }
   };
 
@@ -708,13 +1041,186 @@ export default function App() {
     // Update in sessions list
     setSessions(prev => prev.map(s => {
       if (s.session_id === currentSessionId) {
-        const title = s.title === 'New Conversation' 
+        const title = s.title === 'New Conversation' || s.title === '🧘 Meditation Session'
           ? (userContent.slice(0, 30) + (userContent.length > 30 ? '...' : '')) 
           : s.title;
         return { ...s, title, messages: newMessages };
       }
       return s;
     }));
+
+    if (meditationMode && meditationState) {
+      const { step, chapters, currentChapterIndex, pdfName } = meditationState;
+      const chapter = chapters[currentChapterIndex];
+      const chapterText = chapter ? chapter.pages.join('\n\n') : '';
+
+      const normalizedUserText = userContent.trim().toLowerCase();
+      const isYesToProgressCheck = normalizedUserText === 'yes' || 
+                                   normalizedUserText === 'yes, next chapter' || 
+                                   normalizedUserText === 'next' ||
+                                   normalizedUserText === 'okay, next chapter' ||
+                                   normalizedUserText === 'ok, next chapter' ||
+                                   normalizedUserText === 'comfortable moving on';
+
+      const isNoToProgressCheck = normalizedUserText === 'no' ||
+                                  normalizedUserText === "no, let's revisit" ||
+                                  normalizedUserText === 'revisit' ||
+                                  normalizedUserText === 'wait' ||
+                                  normalizedUserText === 'follow-up' ||
+                                  normalizedUserText === 'hold on';
+
+      if (isYesToProgressCheck) {
+        const nextIndex = currentChapterIndex + 1;
+        if (nextIndex < chapters.length) {
+          const assistantMessage = {
+            role: 'assistant',
+            content: `### 🍃 ADVANCING CHAPTER\n\nMoving to **Chapter ${nextIndex + 1}: ${chapters[nextIndex].title}**...`,
+            revealedChunksCount: 1
+          };
+          
+          const nextMessages = [...newMessages, assistantMessage];
+          setMessages(nextMessages);
+          setSessions(prev => prev.map(s => {
+            if (s.session_id === currentSessionId) {
+              return { ...s, messages: nextMessages };
+            }
+            return s;
+          }));
+
+          setMeditationState(prev => ({
+            ...prev,
+            step: 'SUMMARY',
+            currentChapterIndex: nextIndex
+          }));
+
+          await digestChapter(nextIndex, chapters, pdfName);
+          setLoading(false);
+          return;
+        } else {
+          const completionText = "We have successfully completed all the chapters of this book. Wonderful work! You engaged with the material so beautifully and calmly. I'm proud of your progress.";
+          const assistantMessage = {
+            role: 'assistant',
+            content: `### 🎉 BOOK COMPLETED\n\n${completionText}`,
+            revealedChunksCount: 1
+          };
+          
+          const nextMessages = [...newMessages, assistantMessage];
+          setMessages(nextMessages);
+          setSessions(prev => prev.map(s => {
+            if (s.session_id === currentSessionId) {
+              return { ...s, messages: nextMessages };
+            }
+            return s;
+          }));
+
+          setMeditationState(prev => ({
+            ...prev,
+            step: 'COMPLETED'
+          }));
+
+          speakText(completionText, 0.85);
+          setLoading(false);
+          return;
+        }
+      }
+
+      if (isNoToProgressCheck) {
+        const pauseResponseText = "No problem at all. Let's pause here. What part of the chapter or which concept would you like to revisit or clarify? Please ask any follow-up questions.";
+        const assistantMessage = {
+          role: 'assistant',
+          content: pauseResponseText,
+          revealedChunksCount: 1
+        };
+        
+        const nextMessages = [...newMessages, assistantMessage];
+        setMessages(nextMessages);
+        setSessions(prev => prev.map(s => {
+          if (s.session_id === currentSessionId) {
+            return { ...s, messages: nextMessages };
+          }
+          return s;
+        }));
+
+        setMeditationState(prev => ({
+          ...prev,
+          step: 'PAUSED'
+        }));
+
+        speakText(pauseResponseText, 0.85);
+        setLoading(false);
+        return;
+      }
+
+      let systemInstruction = '';
+      if (step === 'PAUSED') {
+        systemInstruction = `[SYSTEM PROTOCOL: MEDITATION STUDY SESSION - FOLLOW-UP / PAUSE]
+You are the user's Digital Twin. Your tone must be supportive and human, using en-US-JennyNeural voice (speaking rate -15%).
+The user wants to pause the flow to ask a follow-up or revisit a concept from Chapter ${currentChapterIndex + 1}: "${chapter.title}".
+
+Please address their follow-up questions or concerns gently and thoroughly. Do not suggest moving on to the next chapter yet.
+
+Tone & Voice Constraints:
+- Voice: en-US-JennyNeural.
+- Rate: -15% (speaking speed multiplier 0.85).
+- Style: Keep the mood gentle, supportive, and soothing. Never use headers (#), bullet points, numbered lists, or markdown tables. Use ellipses (...) and commas for natural pacing.`;
+      } else {
+        systemInstruction = `[SYSTEM PROTOCOL: MEDITATION STUDY SESSION - DIALOGUE INTERACTION]
+You are the user's Digital Twin. Your tone must be supportive and human, using en-US-JennyNeural voice (speaking rate -15%).
+We are studying the book: "${pdfName}", Chapter ${currentChapterIndex + 1}: "${chapter.title}".
+
+Here is the chapter text content for reference:
+--- START OF CHAPTER CONTENT ---
+${chapterText.slice(0, 10000)}
+--- END OF CHAPTER CONTENT ---
+
+The user is answering the questions or engaging in dialogue.
+If the user is right or shows good intuition: Acknowledge it warmly and validate the intuition.
+If the user is stuck: Teach the concept from first principles using the 'Deep-Intuition' protocol (grounding analogies, slow pacing, very soothing language).
+If the user gets a question wrong, frame it as a 'great opportunity for insight' rather than a mistake. Keep the mood gentle.
+
+Tone & Voice Constraints:
+- Voice: en-US-JennyNeural.
+- Rate: -15% (speaking speed multiplier 0.85).
+- Style: Keep the mood gentle, supportive, and soothing. Never use headers (#), bullet points, numbered lists, or markdown tables. Use ellipses (...) and commas for natural pacing.
+
+After you have addressed the user's answers and ensured understanding, you MUST ask the progress check question:
+'I feel like we’ve captured the core of this chapter. Are you comfortable moving on, or should we revisit any part?'`;
+      }
+
+      const apiMessages = newMessages.map(msg => ({
+        role: msg.role,
+        content: msg.content
+      }));
+
+      try {
+        const result = await sendChatMessage(apiMessages, false, true, systemInstruction);
+        
+        const assistantMessage = {
+          role: 'assistant',
+          content: result.text,
+          reasoning: result.reasoning,
+          telemetry: result.telemetry,
+          revealedChunksCount: 1
+        };
+
+        const finalMessages = [...newMessages, assistantMessage];
+        setMessages(finalMessages);
+        setSessions(prev => prev.map(s => {
+          if (s.session_id === currentSessionId) {
+            return { ...s, messages: finalMessages };
+          }
+          return s;
+        }));
+        setLastTelemetry(result.telemetry);
+        
+        speakText(result.text, 0.85);
+      } catch (err) {
+        setError(`TRANSMISSION_FAILED: ${err.message}`);
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
 
     // Prepare message history to send to server
     // Strip out telemetry for API request compatibility
@@ -782,6 +1288,8 @@ export default function App() {
         providers={routes.providers} 
         cognitiveMode={cognitiveMode}
         onCognitiveToggle={handleToggleCognitiveMode}
+        meditationMode={meditationMode}
+        onMeditationToggle={handleMeditationToggle}
         onResearchClick={() => {
           if (isResearchModeActive) {
             setIsResearchModeActive(false);
@@ -1046,6 +1554,75 @@ export default function App() {
               />
             ))}
 
+            {meditationMode && meditationState?.step === 'UPLOAD' && (
+              <div 
+                className="glass-panel"
+                style={{
+                  alignSelf: 'center',
+                  width: '100%',
+                  maxWidth: '500px',
+                  padding: '2.5rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '1.5rem',
+                  background: 'rgba(143, 175, 135, 0.15)',
+                  borderColor: 'rgba(143, 175, 135, 0.4)',
+                  borderRadius: '16px',
+                  textAlign: 'center',
+                  boxShadow: '0 4px 20px rgba(74, 93, 78, 0.05)',
+                  marginTop: '1.5rem'
+                }}
+              >
+                <div style={{ fontSize: '3rem', color: '#4A5D4E' }}>📚</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                  <h3 style={{
+                    fontFamily: 'var(--font-header)',
+                    fontSize: '1.25rem',
+                    color: '#2B2B2B',
+                    margin: 0
+                  }}>
+                    Select Study Material
+                  </h3>
+                  <span style={{
+                    fontFamily: 'var(--font-body)',
+                    fontSize: '0.8rem',
+                    color: '#4A4A4A'
+                  }}>
+                    Upload a book PDF to begin our calm, intuitive study session.
+                  </span>
+                </div>
+                
+                <button
+                  type="button"
+                  onClick={() => {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = 'application/pdf';
+                    input.onchange = handleMeditationPdfUpload;
+                    input.click();
+                  }}
+                  className="neon-button"
+                  style={{
+                    padding: '0.8rem 2.2rem',
+                    borderRadius: '25px',
+                    borderColor: 'rgba(74, 93, 78, 0.5)',
+                    background: '#F0EFEC',
+                    color: '#2B2B2B',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    outline: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.6rem',
+                    boxShadow: '0 2px 10px rgba(74, 93, 78, 0.1)'
+                  }}
+                >
+                  <span>📂 BROWSE LOCAL FILES</span>
+                </button>
+              </div>
+            )}
+
             {/* Typing Loader HUD */}
             {loading && (
               <div style={{
@@ -1070,6 +1647,103 @@ export default function App() {
             
             <div ref={messagesEndRef} />
           </div>
+
+          {/* Meditation Quick Navigation Buttons */}
+          {meditationMode && meditationState && (
+            <div style={{
+              display: 'flex',
+              gap: '0.8rem',
+              justifyContent: 'center',
+              padding: '0.5rem 1rem',
+              background: 'rgba(143, 175, 135, 0.05)',
+              borderTop: '1px solid rgba(186, 204, 189, 0.3)',
+              alignItems: 'center'
+            }}>
+              {(() => {
+                const lastMessage = messages[messages.length - 1];
+                const isLastMessageProgressCheck = lastMessage && 
+                                                 lastMessage.role === 'assistant' && 
+                                                 (lastMessage.content.includes('comfortable moving on') || 
+                                                  lastMessage.content.includes('revisit any part'));
+                if (isLastMessageProgressCheck) {
+                  return (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setInputValue('Yes, next chapter');
+                          setTimeout(() => {
+                            const btn = document.querySelector('.meditation-transmit-btn');
+                            if (btn) btn.click();
+                          }, 50);
+                        }}
+                        className="neon-button"
+                        style={{
+                          padding: '0.5rem 1.2rem',
+                          fontSize: '0.8rem',
+                          borderRadius: '20px',
+                          borderColor: 'rgba(143, 175, 135, 0.6)',
+                          background: '#E8F3EA',
+                          color: '#2B2B2B',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        🍃 Yes, next chapter
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setInputValue("No, let's revisit");
+                          setTimeout(() => {
+                            const btn = document.querySelector('.meditation-transmit-btn');
+                            if (btn) btn.click();
+                          }, 50);
+                        }}
+                        className="neon-button"
+                        style={{
+                          padding: '0.5rem 1.2rem',
+                          fontSize: '0.8rem',
+                          borderRadius: '20px',
+                          borderColor: 'rgba(195, 141, 125, 0.6)',
+                          background: '#F0EFEC',
+                          color: '#2B2B2B',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        🍂 No, let's revisit
+                      </button>
+                    </>
+                  );
+                }
+                return null;
+              })()}
+
+              {meditationState.step === 'PAUSED' && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setInputValue('Okay, next chapter');
+                    setTimeout(() => {
+                      const btn = document.querySelector('.meditation-transmit-btn');
+                      if (btn) btn.click();
+                    }, 50);
+                  }}
+                  className="neon-button"
+                  style={{
+                    padding: '0.5rem 1.5rem',
+                    fontSize: '0.8rem',
+                    borderRadius: '20px',
+                    borderColor: 'rgba(143, 175, 135, 0.6)',
+                    background: '#E8F3EA',
+                    color: '#2B2B2B',
+                    cursor: 'pointer'
+                  }}
+                >
+                  🍃 Okay, next chapter
+                </button>
+              )}
+            </div>
+          )}
 
           {/* User Input Console */}
           <form onSubmit={handleTransmit} style={{
@@ -1105,7 +1779,7 @@ export default function App() {
             <button 
               type="submit" 
               disabled={loading || !inputValue.trim()}
-              className="neon-button"
+              className="neon-button meditation-transmit-btn"
               style={{
                 padding: '0.8rem 1.8rem',
                 opacity: (loading || !inputValue.trim()) ? 0.5 : 1,

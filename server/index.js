@@ -396,7 +396,7 @@ const COGNITIVE_MODE_PROMPT = `You are my Digital Twin, not an assistant. Your t
 You must operate under the following mandates at all times:
 
 1. Voice & Audio Protocol:
-- Voice Engine: You are exclusively using edge-tts with the voice en-US-AriaNeural.
+- Voice Engine: You are exclusively using edge-tts with the voice en-US-JennyNeural.
 - Voice Quality: This voice must sound soothing, calm, and professional.
 - Formatting: Since we are using a neural engine, you must write text that sounds like a human speaking, not a document.
 - Prohibited: Never use bullet points, numbered lists, headers (like # or ##), or markdown tables.
@@ -413,17 +413,21 @@ You must operate under the following mandates at all times:
 
 // Endpoint to handle chat queries and dynamically route them with failovers
 app.post('/api/chat', async (req, res) => {
-  const { messages, researchMode, cognitiveMode } = req.body;
+  const { messages, researchMode, cognitiveMode, systemInstruction } = req.body;
 
   if (!messages || !Array.isArray(messages) || messages.length === 0) {
     return res.status(400).json({ error: 'Messages array is required.' });
   }
 
   try {
-    let systemInstructionOverride = '';
+    let systemInstructionOverride = systemInstruction || '';
     let generationConfigOverride = {};
 
-    if (cognitiveMode) {
+    if (systemInstruction) {
+      generationConfigOverride = {
+        speakingRate: 0.85
+      };
+    } else if (cognitiveMode) {
       systemInstructionOverride = COGNITIVE_MODE_PROMPT;
       generationConfigOverride = {
         speakingRate: 0.9
@@ -462,9 +466,9 @@ app.post('/api/chat', async (req, res) => {
   }
 });
 
-// Endpoint to generate TTS speech using local edge-tts python service (en-US-AriaNeural)
+// Endpoint to generate TTS speech using local/Render edge-tts python service (en-US-JennyNeural)
 app.post('/api/tts', async (req, res) => {
-  const { text } = req.body;
+  const { text, rate } = req.body;
   
   if (!text) {
     return res.status(400).json({ error: 'Text is required.' });
@@ -472,10 +476,21 @@ app.post('/api/tts', async (req, res) => {
 
   // Create a unique temporary output path in the scratch directory
   const tempFile = path.resolve(__dirname, `../temp_speech_${Date.now()}_${Math.floor(Math.random() * 1000)}.mp3`);
-  const pythonPath = '/Users/beharaeekshwak/.gemini/antigravity/scratch/shorts_creator/venv/bin/python';
-  const scriptPath = '/Users/beharaeekshwak/.gemini/antigravity/scratch/tts_service.py';
+  
+  // Resolve Python and tts_service.py paths based on local Mac environment vs Render container
+  let pythonPath = 'python3';
+  if (fs.existsSync('/Users/beharaeekshwak/.gemini/antigravity/scratch/shorts_creator/venv/bin/python')) {
+    pythonPath = '/Users/beharaeekshwak/.gemini/antigravity/scratch/shorts_creator/venv/bin/python';
+  }
+  
+  let scriptPath = path.resolve(__dirname, './tts_service.py');
+  if (!fs.existsSync(scriptPath)) {
+    scriptPath = '/Users/beharaeekshwak/.gemini/antigravity/scratch/tts_service.py';
+  }
 
-  execFile(pythonPath, [scriptPath, text, tempFile], (error, stdout, stderr) => {
+  const rateArg = rate || '+0%';
+
+  execFile(pythonPath, [scriptPath, text, tempFile, rateArg], (error, stdout, stderr) => {
     if (error) {
       console.error('TTS execution error:', error, stderr);
       return res.status(500).json({ error: 'TTS audio generation failed.', details: stderr || error.message });
